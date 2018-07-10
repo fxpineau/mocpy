@@ -189,25 +189,36 @@ def mocs_op():
     moc2 = MOC.from_json({
         '0': [0, 1, 7, 4, 3]
     })
-    return dict(first=moc1, second=moc2)
+    moc3 = MOC.from_json({
+        '0': [6, 3]
+    })
+    return dict(first=moc1, second=moc2, third=moc3)
 
 
 def test_moc_union(mocs_op):
-    assert mocs_op['first'].union(mocs_op['second']) == MOC.from_json({
-        '0': [0, 1, 2, 3, 4, 5, 7]
+    assert mocs_op['first'].union(mocs_op['second'], mocs_op['third']) == MOC.from_json({
+        '0': [0, 1, 2, 3, 4, 5, 6, 7]
     })
 
 
 def test_moc_intersection(mocs_op):
-    assert mocs_op['first'].intersection(mocs_op['second']) == MOC.from_json({
-        '0': [0, 3, 4]
+    assert mocs_op['first'].intersection(mocs_op['second'], mocs_op['third']) == MOC.from_json({
+        '0': [3]
     })
 
 
 def test_moc_difference(mocs_op):
-    assert mocs_op['first'].difference(mocs_op['second']) == MOC.from_json({
+    assert mocs_op['first'].difference(mocs_op['second'], mocs_op['third']) == MOC.from_json({
         '0': [2, 5]
     })
+
+
+def test_degrade_moc():
+    precise_moc = MOC.from_json({
+        '1': [4, 21]
+    })
+    degraded_moc = precise_moc.degrade_to_order(new_order=0)
+    assert degraded_moc == MOC.from_json({'0': [1, 5]})
 
 
 def test_moc_complement():

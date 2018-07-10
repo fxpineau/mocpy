@@ -31,12 +31,13 @@ def log2_lut(v):
 
     Parameters
     ----------
-    v : int
-        32 bit integer
+    v : `numpy.ndarray`
+        array of 32 bit integers
 
     Returns
     -------
-
+    res : `numpy.ndarray`
+        numpy array containing the log2 of ``v`` elements.
     """
     res = np.zeros(v.shape, dtype=np.int32)
 
@@ -63,14 +64,10 @@ def log2_lut(v):
 
 def uniq2orderipix_lut(uniq):
     """
-    ~30% faster than the method below
-    Parameters
-    ----------
-    uniq
+    convert a HEALPix pixel coded as an NUNIQ number
+    to a (norder, ipix) tuple.
 
-    Returns
-    -------
-
+    ~30% faster than the method below.
     """
     order = log2_lut(uniq >> 2) >> 1
     ipix = uniq - (1 << (2 * (order + 1)))
@@ -79,7 +76,7 @@ def uniq2orderipix_lut(uniq):
 
 def uniq2orderipix(uniq):
     """
-    convert a HEALPix pixel coded as a NUNIQ number
+    convert a HEALPix pixel coded as an NUNIQ number
     to a (norder, ipix) tuple
     """
     order = ((np.log2(uniq//4)) // 2)
@@ -89,12 +86,20 @@ def uniq2orderipix(uniq):
     return order, ipix
 
 
-def orderipix2uniq(n_order, n_pix):
-    return n_pix + ((4**n_order) << 2)
+def trailing_zeros(x):
+    """
+    Count the number of trailing bit set to zero in ``x``
 
+    Parameters
+    ----------
+    x : int
+        64 bit signed integer
 
-# x : int 64 bits
-def number_trailing_zeros(x):
+    Returns
+    -------
+    bits: int
+        number of trailing bits set to zero.
+    """
     bits = 0
     # convention for x == 0 => return 0
     if x == 0:
@@ -120,14 +125,3 @@ def number_trailing_zeros(x):
         x >>= 1
 
     return bits
-
-"""
-def number_trailing_zeros(i):
-    # O(log(i)) complexity here. Can be done in O(1) using more low-level algo
-    nb = 0
-    while (i & 1) == 0 and i > 0:
-        nb += 1
-        i = i >> 1
-
-    return nb
-"""

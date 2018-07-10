@@ -29,9 +29,6 @@ class AbstractMOC:
         # Must be overridden in subclasses
         self._fits_header_keywords = None
 
-    def __repr__(self):
-        return self._interval_set.__repr__()
-
     def __eq__(self, another_moc):
         """
         Test equality between self and ``another_moc``
@@ -62,7 +59,7 @@ class AbstractMOC:
         for iv in self._interval_set._intervals:
             combo |= iv[0] | iv[1]
 
-        ret = AbstractMOC.HPY_MAX_NORDER - (utils.number_trailing_zeros(combo) // 2)
+        ret = AbstractMOC.HPY_MAX_NORDER - (utils.trailing_zeros(combo) // 2)
         if ret < 0:
             ret = 0
 
