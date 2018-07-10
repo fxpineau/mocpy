@@ -2,7 +2,7 @@
 MOCPy
 *****
 
-MOCPy is a Python library allowing easy creation, parsing and manipulation of MOCs (Multi-Order Coverage maps). See the `documentation <https://mocpy.readthedocs.io/en/latest/>`__ for more details about installing MOCPy and using it.
+MOCPy is a Python library allowing easy creation, parsing and manipulation of MOCs (Multi-Order Coverage maps). See the `documentation <https://mocpy.readthedocs.io/en/mocskyregion/>`__ for more details about installing MOCPy and using it.
 
 |Travis Status| |Notebook Binder| |RTD|
 
