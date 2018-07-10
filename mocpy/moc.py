@@ -28,22 +28,22 @@ class MOC:
 
     MOC stands for Mutli-Order Coverage. It is a spatial and hierarchical description of a region on a sphere.
     MOC is an IVOA standard and is the subject of a publication that you can find
-    <here `http://www.ivoa.net/documents/MOC/`>__.
+    `here <http://www.ivoa.net/documents/MOC/>`__ .
 
     MOCs are based on the HEALPix sky tessellation using the NESTED numbering scheme. A MOC is a set of
-    HEALPix pixels at different orders with a maximum HEALPix resolution corresponding to the order 29 i.e. a cell
+    HEALPix cells at different orders with a maximum resolution corresponding to the order 29 i.e. a cell
     resolution of ~393.2μas.
 
-    * MOCs are usually stored as FITS file containing a list of UNIQ numbers describing HEALPix cells at different orders.
-      This class aims at creating MOCs from FITS/json format, FITS image with a mask array,
+    * MOCs are usually stored as FITS file containing a list of UNIQ numbers describing the HEALPix cells at
+      different orders. This class aims at creating MOCs from FITS/json format, FITS image with a mask array,
       `astropy.coordinates.SkyCoord` and `astropy.units.Quantity`.
 
     * Basic operations on MOCs are available such as the intersection, union, difference, complement.
 
-    * A :func:`~mocpy.moc.MOC.contains` method aims at filtering (ra, dec) positions expressed as
-    `astropy.units.Quantity` through the MOC.
+    * A :meth:`~mocpy.moc.MOC.contains` method aims at filtering (ra, dec) positions expressed as
+      `astropy.units.Quantity` through the MOC.
 
-    * You can do MOC serialization to FITS (i.e. list of UNIQ numbers stored in a binary HDU table) and JSON.
+    * You can serialize MOCs to FITS (i.e. list of UNIQ numbers stored in a binary HDU table) and JSON.
       An optional parameter allows you to write it to a file.
     """
     HPY_MAX_NORDER = 29
@@ -58,7 +58,7 @@ class MOC:
 
         Parameters
         ----------
-        another_moc : `~mocpy.abstract_moc.AbstractMoc`
+        another_moc : `~mocpy.moc.MOC`
             the moc object to test the equality with
 
         Returns
@@ -68,7 +68,8 @@ class MOC:
             for consistency before comparing them).
         """
         if not isinstance(another_moc, MOC):
-            raise TypeError('Cannot compare an AbstractMOC with a {0}'.format(type(another_moc)))
+            raise TypeError('The object you want to test the equality with is not a MOC but a {0}'
+                            .format(type(another_moc)))
 
         return self._interval_set == another_moc._interval_set
 
@@ -78,7 +79,7 @@ class MOC:
     @property
     def max_order(self):
         """
-        This returns the deepest order needed to describe the current _interval_set
+        Returns the deepest order needed to describe the current _interval_set
         """
         # TODO: cache value
         combo = int(0)
@@ -94,7 +95,7 @@ class MOC:
     @property
     def sky_fraction(self):
         """
-        return the sky fraction (between 0 and 1) covered by the MOC
+        Returns the sky fraction (between 0 and 1) covered by the MOC
         """
         pix_id_arr = self._best_res_pixels()
         nb_pix_filled = pix_id_arr.size
@@ -109,14 +110,14 @@ class MOC:
 
         Parameters
         ----------
-        another_moc : `~mocpy.abstract_moc.AbstractMOC`
-            the MOC/TimeMoc used for performing the intersection with self
-        args : `~mocpy.abstract_moc.AbstractMOC`
+        another_moc : `~mocpy.moc.MOC`
+            the MOC used for performing the intersection with self
+        args : `~mocpy.moc.MOC`
             other MOCs
 
         Returns
         -------
-        result : `~mocpy.moc.MOC` or `~mocpy.tmoc.TimeMoc`
+        result : `~mocpy.moc.MOC`
             MOC object whose interval set corresponds to : self & ``moc``
         """
         interval_set = self._interval_set.intersection(another_moc._interval_set)
@@ -131,14 +132,14 @@ class MOC:
 
         Parameters
         ----------
-        another_moc : `mocpy.abstract_moc.AbstractMOC`
-            the MOC/TimeMoc to bind to self
-        args : `~mocpy.abstract_moc.AbstractMOC`
+        another_moc : `mocpy.moc.MOC`
+            the MOC to bind to self
+        args : `~mocpy.moc.MOC`
             other MOCs
 
         Returns
         -------
-        result : `~mocpy.moc.MOC` or `~mocpy.tmoc.TimeMoc`
+        result : `~mocpy.moc.MOC`
             MOC object whose interval set corresponds to : self | ``moc``
         """
         interval_set = self._interval_set.union(another_moc._interval_set)
@@ -153,14 +154,14 @@ class MOC:
 
         Parameters
         ----------
-        moc : `mocpy.abstract_moc.AbstractMOC`
-            the MOC/TimeMoc to substract from self
-        args : `~mocpy.abstract_moc.AbstractMOC`
+        moc : `mocpy.moc.MOC`
+            the MOC to substract from self
+        args : `~mocpy.moc.MOC`
             other MOCs
 
         Returns
         -------
-        result : `~mocpy.moc.MOC` or `~mocpy.tmoc.TimeMoc`
+        result : `~mocpy.moc.MOC`
             MOC object whose interval set corresponds to : self - ``moc``
         """
         interval_set = self._interval_set.difference(another_moc._interval_set)
@@ -175,7 +176,7 @@ class MOC:
 
         Returns
         -------
-        complement : `~mocpy.AbstractMoc`
+        complement : `~mocpy.moc.MOC`
             the complemented moc
         """
         res = []
@@ -269,7 +270,7 @@ class MOC:
 
         Returns
         -------
-        moc : `mocpy.moc.MOC` or `mocpy.tmoc.TimeMoc`
+        moc : `mocpy.moc.MOC`
             the res decreased mocpy object
         """
         shift = 2 * (MOC.HPY_MAX_NORDER - new_order)
@@ -302,8 +303,8 @@ class MOC:
 
         Returns
         -------
-        moc : `~mocpy.moc.MOC` or `~mocpy.tmoc.TimeMoc`
-            the MOC/TimeMoc object reflecting ``json_moc``.
+        moc : `~mocpy.moc.MOC`
+            the MOC object reflecting ``json_moc``.
 
         """
         intervals_arr = np.array([])
@@ -334,7 +335,7 @@ class MOC:
 
         Returns
         -------
-        result : `~mocpy.moc.MOC` or `~mocpy.tmoc.TimeMoc`
+        result : `~mocpy.moc.MOC`
             the mocpy object having as interval set the one stored in the fits file located at ``path``
         """
         table = Table.read(filename)
@@ -632,7 +633,7 @@ class MOC:
         Returns
         -------
         thdulist : `astropy.io.fits.HDUList`
-            the fits serialization of the MOC/TimeMoc object
+            the fits serialization of self
         """
         if moc_order <= 13:
             fits_format = '1J'
@@ -655,7 +656,7 @@ class MOC:
 
     def write(self, path=None, format='fits', optional_kw_dict=None, write_to_file=False):
         """
-        Serialize a MOC/TimeMoc object.
+        Serialize a MOC object.
 
         Possibility to write it to a file at ``path``. Format can be 'fits' or 'json',
         though only the fits format is officially supported by the IVOA.
@@ -671,12 +672,12 @@ class MOC:
             optional dictionary keywords for the header of the fits file. Only used if ``format`` is "fits"
         write_to_file : bool, optional
             Set to False by default. In this case, this method does not write to a file but returns the serialized form
-            of the MOC/TimeMoc object to the user. If you want to write to a file
+            of the MOC object to the user.
 
         Returns
         -------
-        result : a `astropy.io.fits.HDUList` if ``format`` is set to "fits" or {str, [int]} otherwise
-            The serialization of the MOC/TimeMoc object
+        result : `astropy.io.fits.HDUList`/dict
+            depending on the value of ``format``.
         """
         formats = ('fits', 'json')
         if format not in formats:
