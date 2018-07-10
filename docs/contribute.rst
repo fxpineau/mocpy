@@ -22,7 +22,8 @@ TODO: describe how to hack on mocpy.
 
     pytest mocpy -v -k <your_test_name>  --profile-svg
 
-This will generate for you a nice SVG graph telling you how much time functions in your test take
+This will generate for you a nice SVG graph telling you how much time functions in your test take.
+
 - To build the docs from the repo directory::
 
     cd docs

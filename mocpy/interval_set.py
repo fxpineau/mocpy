@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function, unicode_literals
+from .py23_compat import range, int
+
 import copy
 import numpy as np
 
-from .py23_compat import range
 from .utils import uniq2orderipix
 
 __author__ = "Thomas Boch"
