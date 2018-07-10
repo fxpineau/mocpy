@@ -1,12 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function
-from .py23_compat import urlencode, int, BytesIO
-import requests
-import tempfile
-import os
 import numpy as np
 
-from astropy.utils.data import download_file
 from astropy import units as u
 from astropy.io import fits
 from astropy.coordinates import ICRS
@@ -239,81 +234,6 @@ class MOC(AbstractMOC):
         return moc
 
     @classmethod
-    def from_vizier_table(cls, table_id, nside=256):
-        """
-        Create a `~mocpy.moc.MOC` object from a VizieR table
-
-        TODO already implemented in astroquery.cds (asking the MOCServer for an ID).
-        TODO a astroquery.cds.query_object(ID) should return a Dataset object containing the field ``moc_access_url``
-
-        Parameters
-        ----------
-        table_id : str
-            table index
-        nside : int, optional
-            256 by default
-
-        Returns
-        -------
-        result : `~mocpy.moc.MOC`
-            the created moc
-        """
-        nside_possible_values = (8, 16, 32, 64, 128, 256, 512)
-        if nside not in nside_possible_values:
-            raise ValueError('Bad value for nside. Must be in {0}'.format(nside_possible_values))
-
-        result = cls.from_ivorn('ivo://CDS/' + table_id, nside)
-        return result
-
-    MOC_SERVER_ROOT_URL = 'http://alasky.unistra.fr/MocServer/query'
-
-    @classmethod
-    def from_ivorn(cls, ivorn, nside=256):
-        """
-        Create a `~mocpy.moc.MOC` object from a given ivorn
-
-        TODO already implemented in astroquery.cds (asking the MOCServer for an ID).
-        TODO a astroquery.cds.query_object(ID) should return a Dataset object containing the field ``moc_access_url``
-
-        Parameters
-        ----------
-        ivorn : str
-        nside : int, optional
-            256 by default
-
-        Returns
-        -------
-        result : `~mocpy.moc.MOC`
-            the created moc
-        """
-        return cls.from_url('%s?%s' % (MOC.MOC_SERVER_ROOT_URL,
-                                       urlencode({
-                                           'ivorn': ivorn,
-                                           'get': 'moc',
-                                           'order': int(np.log2(nside))
-                                       })))
-
-    @classmethod
-    def from_url(cls, url):
-        """
-        Create a `~mocpy.moc.MOC` object from a given url
-
-        TODO : should be implemented in astroquery ?
-
-        Parameters
-        ----------
-        url : str
-            the url where the fits file representing a moc is available
-
-        Returns
-        -------
-        result : `~mocpy.moc.MOC`
-            the created moc
-        """
-        path = download_file(url, show_progress=False, timeout=60)
-        return cls.from_fits(path)
-
-    @classmethod
     def from_skycoords(cls, skycoords, max_norder):
         """
         Create a MOC from astropy skycoords
@@ -349,55 +269,6 @@ class MOC(AbstractMOC):
         pix_id_arr = self._best_res_pixels()
         nb_pix_filled = pix_id_arr.size
         return nb_pix_filled / float(3 << (2*(self.max_order + 1)))
-
-    # TODO : move this in astroquery.Simbad.query_region
-    def query_simbad(self, max_rows=10000):
-        """
-        query a view of SIMBAD data for SIMBAD objects in the coverage of the MOC instance
-        """
-        return self._query('SIMBAD', max_rows)
-
-    # TODO : move this in astroquery.Vizier.query_region
-    def query_vizier_table(self, table_id, max_rows=10000):
-        """
-        query a VizieR table for sources in the coverage of the MOC instance
-        """
-        return self._query(table_id, max_rows)
-
-    # TODO : move this in astroquery
-    def _query(self, resource_id, max_rows):
-        """
-        internal method to query Simbad or a VizieR table
-        for sources in the coverage of the MOC instance
-        """
-        from astropy.io.votable import parse_single_table
-
-        if max_rows is not None and max_rows >= 0:
-            max_rows_str = str(max_rows)
-        else:
-            max_rows_str = str(9999999999)
-
-        tmp_moc = tempfile.NamedTemporaryFile(delete=False)
-
-        self.write(tmp_moc.name, write_to_file=True)
-        r = requests.post('http://cdsxmatch.u-strasbg.fr/QueryCat/QueryCat',
-                          data={'mode': 'mocfile',
-                                'catName': resource_id,
-                                'format': 'votable',
-                                'limit': max_rows_str},
-                          files={'moc': open(tmp_moc.name, 'rb')},
-                          headers={'User-Agent': 'MOCPy'},
-                          stream=True)
-
-        tmp_vot = BytesIO()
-        tmp_vot.write(r.content)
-
-        table = parse_single_table(tmp_vot).to_table()
-
-        # finally delete temp files
-        os.unlink(tmp_moc.name)
-
-        return table
 
     def plot(self, title='MOC', coord='C'):
         """
