@@ -19,8 +19,7 @@ MOC is an `IVOA standard <http://ivoa.net/documents/MOC/>`__ enabling descriptio
 of arbitrary sky regions. Based on the HEALPix sky tessellation, it maps
 regions on the sky into hierarchically grouped predefined cells.
 
-MOCPy provides the `~mocpy.MOC` and `~mocpy.TimeMoc` classes handling respectively the manipulation of spatial
-and temporal MOCs.
+MOCPy provides the `~mocpy.MOC` class handling the manipulation of spatial MOCs.
 
 Finally, MOCPy is distributed under BSD-3 license.
 

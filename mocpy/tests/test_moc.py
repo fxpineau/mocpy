@@ -64,14 +64,6 @@ def test_moc_from_fits():
     moc = MOC.from_fits(fits_path)
 
 
-
-def test_moc_from_fits_images():
-    image_path = 'notebooks/demo-data/image_with_mask.fits.gz'
-
-    moc = MOC.from_fits_images([image_path],
-                                max_norder=10)
-
-
 @pytest.fixture()
 def moc_from_fits_image():
     image_path = 'notebooks/demo-data/image_with_mask.fits.gz'
