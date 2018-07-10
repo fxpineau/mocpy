@@ -36,14 +36,14 @@ class MOC:
 
     * MOCs are usually stored as FITS file containing a list of UNIQ numbers describing the HEALPix cells at
       different orders. This class aims at creating MOCs from FITS/json format, FITS image with a mask array,
-      `astropy.coordinates.SkyCoord` and `astropy.units.Quantity`.
+      `astropy.coordinates.SkyCoord` and lon, lat expressed as `astropy.units.Quantity`.
 
     * Basic operations on MOCs are available such as the intersection, union, difference, complement.
 
     * A :meth:`~mocpy.moc.MOC.contains` method aims at filtering (ra, dec) positions expressed as
       `astropy.units.Quantity` through the MOC.
 
-    * You can serialize MOCs to FITS (i.e. list of UNIQ numbers stored in a binary HDU table) and JSON.
+    * You can serialize MOCs to FITS (i.e. a list of UNIQ numbers stored in a binary HDU table) and JSON.
       An optional parameter allows you to write it to a file.
     """
     HPY_MAX_NORDER = 29
@@ -59,13 +59,12 @@ class MOC:
         Parameters
         ----------
         another_moc : `~mocpy.moc.MOC`
-            the moc object to test the equality with
+            The moc object to test the equality with.
 
         Returns
         -------
         result : bool
-            True if the interval sets of self and ``another_moc`` are equal (the interval sets are checked
-            for consistency before comparing them).
+            True if the interval sets of self and ``another_moc`` are equal.
         """
         if not isinstance(another_moc, MOC):
             raise TypeError('The object you want to test the equality with is not a MOC but a {0}'
@@ -79,7 +78,7 @@ class MOC:
     @property
     def max_order(self):
         """
-        Returns the deepest order needed to describe the current _interval_set
+        Returns the deepest order needed to describe self's interval set.
         """
         # TODO: cache value
         combo = int(0)
@@ -95,7 +94,7 @@ class MOC:
     @property
     def sky_fraction(self):
         """
-        Returns the sky fraction (between 0 and 1) covered by the MOC
+        Returns the sky fraction percentage covered by the MOC i.e. a float between 0 and 1.
         """
         pix_id_arr = self._best_res_pixels()
         nb_pix_filled = pix_id_arr.size
@@ -106,19 +105,19 @@ class MOC:
     """
     def intersection(self, another_moc, *args):
         """
-        Intersection between self and other mocs.
+        Intersection between self and other MOCs.
 
         Parameters
         ----------
         another_moc : `~mocpy.moc.MOC`
-            the MOC used for performing the intersection with self
-        args : `~mocpy.moc.MOC`
-            other MOCs
+            Another mandatory MOC.
+        args : `~mocpy.moc.MOC`, optional
+            More MOCs.
 
         Returns
         -------
         result : `~mocpy.moc.MOC`
-            MOC object whose interval set corresponds to : self & ``moc``
+            A new `~mocpy.moc.MOC` object resulting from the intersection of self with the MOCs passed to the method.
         """
         interval_set = self._interval_set.intersection(another_moc._interval_set)
         for moc in args:
@@ -128,19 +127,19 @@ class MOC:
 
     def union(self, another_moc, *args):
         """
-        Union between self and other mocs.
+        Union between self and other MOCs.
 
         Parameters
         ----------
-        another_moc : `mocpy.moc.MOC`
-            the MOC to bind to self
-        args : `~mocpy.moc.MOC`
-            other MOCs
+        another_moc : `~mocpy.moc.MOC`
+            Another mandatory MOC.
+        args : `~mocpy.moc.MOC`, optional
+            More MOCs.
 
         Returns
         -------
         result : `~mocpy.moc.MOC`
-            MOC object whose interval set corresponds to : self | ``moc``
+            A new `~mocpy.moc.MOC` object resulting from the union of self with the MOCs passed to the method.
         """
         interval_set = self._interval_set.union(another_moc._interval_set)
         for moc in args:
@@ -150,19 +149,19 @@ class MOC:
 
     def difference(self, another_moc, *args):
         """
-        Difference between self and other mocs.
+        Difference between self and other MOCs.
 
         Parameters
         ----------
-        moc : `mocpy.moc.MOC`
-            the MOC to substract from self
-        args : `~mocpy.moc.MOC`
-            other MOCs
+        another_moc : `~mocpy.moc.MOC`
+            Another mandatory MOC.
+        args : `~mocpy.moc.MOC`, optional
+            More MOCs.
 
         Returns
         -------
         result : `~mocpy.moc.MOC`
-            MOC object whose interval set corresponds to : self - ``moc``
+            A new `~mocpy.moc.MOC` object resulting from the difference of self with the MOCs passed to the method.
         """
         interval_set = self._interval_set.difference(another_moc._interval_set)
         for moc in args:
@@ -172,12 +171,12 @@ class MOC:
 
     def complement(self):
         """
-        Create a mocpy object being the complemented of self
+        Compute the complement of self.
 
         Returns
         -------
         complement : `~mocpy.moc.MOC`
-            the complemented moc
+            A new `~mocpy.moc.MOC` object corresponding to the complement of self.
         """
         res = []
         intervals_l = sorted(self._interval_set._intervals.tolist())
@@ -200,19 +199,21 @@ class MOC:
 
     def add_neighbours(self):
         """
-        Add all the pixels at max order in the neighbourhood of the MOC:
+        Add all the pixels at max order in the neighbourhood of self.
 
-        1. Get the HEALPix array of the MOC at the its max order.
-        2. Get the HEALPix array containing the neighbors of the first array (it consists of an ``extended`` HEALPix
-           array containing the first one).
-        3. Compute the difference between the second and the first HEALPix array to get only the neighboring pixels
-           located at the border of the MOC.
-        4. This array of HEALPix neighbors are added to the MOC to get an ``extended`` MOC at its max order.
+        The algorithm follows the steps:
+
+        1. Get the HEALPix cell array of self at its max order.
+        2. Get the HEALPix cell array containing the neighbors of the first array (i.e. an ``extended`` HEALPix
+           cell array containing the first one).
+        3. Subtract the first from the second HEALPix cell array to get only the HEALPix cells
+           located at the border of self.
+        4. This last HEALPix cell array is added to self.
 
         Returns
         -------
         moc : `~mocpy.moc.MOC`
-            self
+            Self which has been augmented.
         """
         pix_id_arr = self._best_res_pixels()
 
@@ -229,20 +230,23 @@ class MOC:
 
     def remove_neighbours(self):
         """
-        Remove all the pixels at max order located at the bound of the moc:
+        Remove all the pixels at max order located at the bound of self.
 
-        1. Get the HEALPix array of the MOC at the its max order.
-        2. Get the HEALPix array containing the neighbors of the first array (it consists of an ``extended`` HEALPix
-           array containing the first one).
-        3. Compute the difference between the second and the first HEALPix array to get only the neighboring pixels
-           located at the border of the MOC.
-        4. Same as step 2 to get the HEALPix neighbors of the last computed array.
-        5. The difference between the original MOC HEALPix array and this one gives a new MOC whose borders are removed.
+        The algorithm follows the steps:
+
+        1. Get the HEALPix cell array of self at its max order.
+        2. Get the HEALPix cell array containing the neighbors of the first array (i.e. an ``extended`` HEALPix
+           cell array containing the first one).
+        3. Subtract the first from the second HEALPix cell array to get only the HEALPix cells
+           located at the border of self.
+        4. Same as step 2. to get the HEALPix cell array containing the neighbors of the last computed array (i.e. the
+           neighboring HEALPix cells of the HEALPix neighbors of self).
+        5. This last HEALPix cell array is subtracted from the HEALPix cell array describing self.
 
         Returns
         -------
         moc : `~mocpy.moc.MOC`
-            self
+            Self whose HEALPix cells located at its border have been removed.
         """
         pix_id_arr = self._best_res_pixels()
 
@@ -262,16 +266,20 @@ class MOC:
 
     def degrade_to_order(self, new_order):
         """
-        Degrade self to a mocpy object at max_order being equal to ``new_order``
+        Degrade self to a new `~mocpy.moc.MOC` object.
+
+        The new degraded MOC has for maximum order ``new_order`` < the maximum order of self.
+        The HEALPix cells of the degraded MOC are those containing at least one HEALPix cell of self.
 
         Parameters
         ----------
         new_order : int
+            The maximum order that we want for the degraded MOC.
 
         Returns
         -------
-        moc : `mocpy.moc.MOC`
-            the res decreased mocpy object
+        moc : `~mocpy.moc.MOC`
+            A new `~mocpy.moc.MOC` object being the degraded of self.
         """
         shift = 2 * (MOC.HPY_MAX_NORDER - new_order)
         ofs = (int(1) << shift) - 1
@@ -294,18 +302,17 @@ class MOC:
     @classmethod
     def from_json(cls, json_moc):
         """
-        Create a MOC from a dictionary of HEALPix arrays indexed by their order (in json format)
+        Create a `~mocpy.moc.MOC` from a dictionary of HEALPix cell arrays indexed by their order (i.e. in json format).
 
         Parameters
         ----------
         json_moc : {str : [int]}
-            A dictionary of HEALPix arrays indexed by their order
+            A dictionary of HEALPix cell arrays indexed by their order.
 
         Returns
         -------
         moc : `~mocpy.moc.MOC`
-            the MOC object reflecting ``json_moc``.
-
+            A new `~mocpy.moc.MOC` object reflecting ``json_moc``.
         """
         intervals_arr = np.array([])
         for order, pix_l in json_moc.items():
@@ -325,18 +332,22 @@ class MOC:
     @classmethod
     def from_fits(cls, filename):
         """
-        Load a MOC from a MOC fits file (i.e. a fits file in which pix are stored as a list of NUNIQ HEALPix numbers
-        in a binary HDU table).
+        Create a `~mocpy.moc.MOC` from a FITS file.
+
+        Works for FITS file in which HEALPix cells are stored as a list of
+        UNIQ HEALPix numbers in a binary HDU table. See the <IVOA standard publication part 2.3.1
+        `http://www.ivoa.net/documents/MOC/20140602/REC-MOC-1.0-20140602.pdf`>__ for more explanations about NUINQ
+        packing.
 
         Parameters
         ----------
         filename : str
-            the path to the moc fits file
+            The path to FITS file.
 
         Returns
         -------
-        result : `~mocpy.moc.MOC`
-            the mocpy object having as interval set the one stored in the fits file located at ``path``
+        moc : `~mocpy.moc.MOC`
+            A new `~mocpy.moc.MOC` object loaded from the FITS file.
         """
         table = Table.read(filename)
 
@@ -349,22 +360,22 @@ class MOC:
     @classmethod
     def from_image(cls, header, max_norder, mask_arr=None):
         """
-        Create a `~mocpy.moc.MOC` from an image stored as a fits file
+        Create a `~mocpy.moc.MOC` from an image stored as a FITS file.
 
         Parameters
         ----------
         header : `~astropy.io.fits.Header`
-            fits header containing all the info of where the image is located (position, size, etc...)
+            The FITS header of the image.
         max_norder : int
-            the moc resolution
+            The maximum order that we want for the new `~mocpy.moc.MOC`.
         mask_arr : `~numpy.ndarray`, optional
-            a 2D boolean array of the same size of the image where pixels having the value 1 are part of
-            the final MOC and pixels having the value 0 are not.
+            A 2D boolean numpy array of the same size of the image where pixels evaluated to True are part of
+            the new MOC and pixels evaluated to False are not.
 
         Returns
         -------
-        moc : `mocpy.MOC`
-            the MOC object loaded from the ``mask_arr`` and ``header`` extracted from the image
+        moc : `~mocpy.moc.MOC`
+            A new `~mocpy.moc.MOC` object created from the image.
         """
         # load the image data
         height = header['NAXIS2']
@@ -409,46 +420,22 @@ class MOC:
         return cls(interval_set)
 
     @classmethod
-    def from_fits_images(cls, path_l, max_norder):
-        """
-        Load a moc from a set of fits images
-
-        Parameters
-        ----------
-        path_l : [str]
-            the path list where the fits image are located
-        max_norder : int
-            moc resolution
-
-        Returns
-        -------
-        moc : `~mocpy.MOC`
-            the union of all the moc from path_l
-        """
-        moc = MOC()
-        for path in path_l:
-            header = fits.getheader(path)
-            current_moc = MOC.from_image(header=header, max_norder=max_norder)
-            moc = moc.union(current_moc)
-
-        return moc
-
-    @classmethod
     def from_skycoords(cls, skycoords, max_norder):
         """
-        Create a MOC from a `astropy.coordinates.SkyCoord`.
+        Create a `~mocpy.moc.MOC` from a `astropy.coordinates.SkyCoord`.
 
         Parameters
         ----------
         skycoords : `astropy.coordinates.SkyCoord`
-            a set of astropy skycoords
+            A set of astropy formatted skycoords.
         max_norder : int
-            the maximum order of the MOC
+            The maximum order that we want for the new `~mocpy.moc.MOC`.
 
         Returns
         -------
-        moc : `mocpy.MOC`
-            a MOC of maximum order ``max_norder`` containing the ``skycoords``
+        moc : `~mocpy.moc.MOC`
+            A new `~mocpy.moc.MOC` object created from a `astropy.coordinates.SkyCoord`
+            (i.e. a list of astropy formatted locations).
         """
         hp = HEALPix(nside=(1 << max_norder), order='nested')
         ipix = hp.lonlat_to_healpix(skycoords.icrs.ra, skycoords.icrs.dec)
@@ -462,21 +449,21 @@ class MOC:
     @classmethod
     def from_lonlat(cls, lon, lat, max_norder):
         """
-        Create a MOC from lon, lat `astropy.units.Quantity`.
+        Create a `~mocpy.moc.MOC` from ``lon``, ``lat`` `astropy.units.Quantity`.
 
         Parameters
         ----------
         lon : `astropy.units.Quantity`
-            a set of ra quantities
+            A set of astropy formatted ra quantities.
         lat : `astropy.units.Quantity`
-            a set of dec quantities
+            A set of astropy formatted dec quantities.
         max_norder : int
-            the maximum order of the MOC
+            The maximum order that we want for the new `~mocpy.moc.MOC`.
 
         Returns
         -------
         moc : `mocpy.MOC`
-            a MOC of maximum order ``max_norder`` containing the positions defined by ``lon``, ``lat``.
+            A new `~mocpy.moc.MOC` object created from lon, lat `astropy.units.Quantity`.
         """
         hp = HEALPix(nside=(1 << max_norder), order='nested')
         ipix = hp.lonlat_to_healpix(lon, lat)
@@ -492,24 +479,24 @@ class MOC:
     """
     def contains(self, ra, dec, keep_inside=True):
         """
-        Get a mask array (e.g. a numpy boolean array) of positions being inside (or outside) the
-        mocpy object instance.
+        Get a mask array (i.e. a numpy boolean array) of positions being inside (or outside) self.
+
+        The size of ``ra`` must be the same as the size of ``dec``.
 
         Parameters
         ----------
         ra : `astropy.units.Quantity`
-            right ascension array
+            A set of astropy formatted ra quantities.
         dec: `astropy.units.Quantity`
-            declination array
+            A set of astropy formatted dec quantities.
         keep_inside : bool, optional
-            True by default. If so the filtered table contains only observations that are located into
-            the mocpy object. If ``keep_inside`` is False, the filtered table contains all observations lying outside
-            the mocpy object.
+            True by default. If so, we set to True all positions lying inside self.
 
         Returns
         -------
         array : `~numpy.darray`
-            A mask boolean array
+            A boolean numpy array of size ``ra`` telling which positions are inside/outside of self depending on the
+            value of ``keep_inside``.
         """
         max_order = self.max_order
         m = np.zeros(nside2npix(1 << max_order), dtype=bool)
@@ -528,23 +515,24 @@ class MOC:
     """
     MOC Plotting
     """
-    def plot(self, title='MOC', coord='C'):
+    def plot(self, title='MOC', coord='ICRS'):
         """
-        Plot the MOC object in a mollweide view
-
-        This method uses matplotlib.
+        Plot self in a mollweide view using matplotlib.
 
         Parameters
         ----------
         title : str
-            the title of the plot
+            The title that will be associated to the plot.
         coord : str
-            type of coord (ICRS, Galactic, ...) in which the moc pix will be plotted.
-            only ICRS coordinates are supported for the moment.
+            Type of coord ('ICRS', 'Galactic', ...) in which we want self to be plotted. For the moment, only ICRS
+            coordinates are supported.
             TODO handle Galactic coordinates
         """
         from matplotlib.colors import LinearSegmentedColormap
         import matplotlib.pyplot as plt
+
+        if coord == 'Galactic':
+            print("Only ICRS is supported for the moment.")
 
         plot_order = 8
         if self.max_order > plot_order:
@@ -589,17 +577,17 @@ class MOC:
     @staticmethod
     def _to_json(uniq_arr):
         """
-        Serialize a mocpy object (array of uniq) to json
+        Serialize a NUNIQ numpy array to json.
 
         Parameters
         ----------
         uniq_arr : `~numpy.ndarray`
-            the array of uniq reprensenting the mocpy object to serialize
+            An array of uniq numbers corresponding to self.
 
         Returns
         -------
-        result_json : {str : [int]}
-            a dictionary of pixel list each indexed by their order
+        result : {str : [int]}
+            A dictionary of HEALPix cells list each indexed by its order.
         """
         result_json = {}
 
@@ -619,21 +607,21 @@ class MOC:
     @staticmethod
     def _to_fits(uniq_arr, moc_order, optional_kw_dict=None):
         """
-        Serialize a mocpy object (array of uniq) to a fits format
+        Serialize a NUNIQ numpy array to a FITS file.
 
         Parameters
         ----------
         uniq_arr : `numpy.ndarray`
-            the array of uniq representing the mocpy object to serialize
+            An array of uniq numbers corresponding to self.
         moc_order : int
-            the order of the MOC described by ``uniq_arr``
+            The maximum order of self.
         optional_kw_dict : dict
-            optional keywords arguments added to the fits header
+            Optional keyword arguments added to the FITS header.
 
         Returns
         -------
         thdulist : `astropy.io.fits.HDUList`
-            the fits serialization of self
+            The FITS serialization of self.
         """
         if moc_order <= 13:
             fits_format = '1J'
@@ -656,28 +644,29 @@ class MOC:
 
     def write(self, path=None, format='fits', optional_kw_dict=None, write_to_file=False):
         """
-        Serialize a MOC object.
+        Serialize self to a FITS/JSON format.
 
-        Possibility to write it to a file at ``path``. Format can be 'fits' or 'json',
-        though only the fits format is officially supported by the IVOA.
+        Possibility to write it to a new file located at ``path``. Format can be 'fits' or 'json',
+        though only the FITS format is officially supported by the IVOA.
 
         Parameters
         ----------
         path : str, optional
-            path to save the MOC object. The mocpy is written to path only if ``serialize`` is False. None by default
+            The path where to save the serialization of self. The serialization is written to ``path`` only if
+            ``write_to_file`` is set to True. None by default.
         format : str, optional
-            format in which the mocpy object will be serialized. Constraint to takes its value
-            among "fits" or "json". By default, ``format`` is set to "fits".
+            The format of the serialization. Must have its value in ('fits', 'json'). By default, ``format`` is set to
+             'fits'.
         optional_kw_dict : {str, _}, optional
-            optional dictionary keywords for the header of the fits file. Only used if ``format`` is "fits"
+            Optional keyword arguments added to the FITS header. Only used if ``format`` is set to 'fits'.
         write_to_file : bool, optional
             Set to False by default. In this case, this method does not write to a file but returns the serialized form
-            of the MOC object to the user.
+            of self.
 
         Returns
         -------
         result : `astropy.io.fits.HDUList`/dict
-            depending on the value of ``format``.
+            Depending on the value of ``format``.
         """
         formats = ('fits', 'json')
         if format not in formats:
@@ -713,12 +702,12 @@ class MOC:
     """
     def _best_res_pixels(self):
         """
-        Get a numpy array of all the HEALPix indexes contained in the MOC at its max order.
+        Get a numpy array containing the HEALPix cells of self at its maximum order.
 
         Returns
         -------
-        array : `numpy.ndarray`
-            the array of HEALPix at ``max_order``
+        array : `~numpy.ndarray`
+            The HEALPix cells of self at its maximum order.
         """
         factor = 2 * (MOC.HPY_MAX_NORDER - self.max_order)
         pix_l = []
@@ -731,19 +720,20 @@ class MOC:
     @staticmethod
     def _get_neighbour_pix(hp, pix_arr):
         """
-        Get all the pixels neighbours of ``pix_arr``
+        Get the HEALPix cells located in the neighborhood of ``pix_arr``.
 
         Parameters
         ----------
         hp : `~astropy_healpix.HEALPix`
-            the HEALPix context
+            The astropy-healpix context.
         pix_arr : `~numpy.ndarray`
-            the input array of pixels
+            Array of HEALPix cells at a specific order -- linked to ``hp``.
+
         Returns
         -------
-        neighbour_pix_arr : `~numpy.ndarray`
-            an array of pixels containing the neighbours of the pixels in ``pix_arr``
+        neighbors_pix_arr : `~numpy.ndarray`
+            The HEALPix cells located in the neighborhood of ``pix_arr``.
         """
-        neighbour_pix_arr = np.unique(hp.neighbours(pix_arr).ravel())
+        neighbors_pix_arr = np.unique(hp.neighbours(pix_arr).ravel())
         # Remove negative pixel values returned by `~astropy_healpix.HEALPix.neighbours`
-        return neighbour_pix_arr[np.where(neighbour_pix_arr >= 0)]
+        return neighbors_pix_arr[np.where(neighbors_pix_arr >= 0)]
