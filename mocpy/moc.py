@@ -35,16 +35,16 @@ class MOC:
     resolution of ~393.2μas.
 
     * MOCs are usually stored as FITS file containing a list of UNIQ numbers describing the HEALPix cells at
-      different orders. This class aims at creating MOCs from FITS/json format, FITS image with a mask array,
+      different orders. This class aims at creating MOCs from FITS/json format, FITS image with a mask numpy array,
       `astropy.coordinates.SkyCoord` and lon, lat expressed as `astropy.units.Quantity`.
 
     * Basic operations on MOCs are available such as the intersection, union, difference, complement.
 
-    * A :meth:`~mocpy.moc.MOC.contains` method aims at filtering (ra, dec) positions expressed as
-      `astropy.units.Quantity` through the MOC.
+    * A :meth:`~mocpy.moc.MOC.contains` method filters (ra, dec) positions expressed as
+      `astropy.units.Quantity` to only keep those lying inside/outside the MOC.
 
-    * You can serialize MOCs to FITS (i.e. a list of UNIQ numbers stored in a binary HDU table) and JSON.
-      An optional parameter allows you to write it to a file.
+    * MOCs can be serialized to FITS (i.e. a list of UNIQ numbers stored in a binary HDU table) and JSON.
+      An optional parameter allows the user to write it to a file.
     """
     HPY_MAX_NORDER = 29
 
@@ -306,7 +306,7 @@ class MOC:
 
         Parameters
         ----------
-        json_moc : {str : [int]}
+        json_moc : dict
             A dictionary of HEALPix cell arrays indexed by their order.
 
         Returns
@@ -335,8 +335,8 @@ class MOC:
         Create a `~mocpy.moc.MOC` from a FITS file.
 
         Works for FITS file in which HEALPix cells are stored as a list of
-        UNIQ HEALPix numbers in a binary HDU table. See the <IVOA standard publication part 2.3.1
-        `http://www.ivoa.net/documents/MOC/20140602/REC-MOC-1.0-20140602.pdf`>__ for more explanations about NUINQ
+        UNIQ HEALPix numbers in a binary HDU table. See the `IVOA standard publication part 2.3.1
+        <http://www.ivoa.net/documents/MOC/20140602/REC-MOC-1.0-20140602.pdf>`__ for more explanations about NUINQ
         packing.
 
         Parameters
@@ -586,7 +586,7 @@ class MOC:
 
         Returns
         -------
-        result : {str : [int]}
+        result : dict
             A dictionary of HEALPix cells list each indexed by its order.
         """
         result_json = {}
@@ -657,7 +657,7 @@ class MOC:
         format : str, optional
             The format of the serialization. Must have its value in ('fits', 'json'). By default, ``format`` is set to
              'fits'.
-        optional_kw_dict : {str, _}, optional
+        optional_kw_dict : dict, optional
             Optional keyword arguments added to the FITS header. Only used if ``format`` is set to 'fits'.
         write_to_file : bool, optional
             Set to False by default. In this case, this method does not write to a file but returns the serialized form
