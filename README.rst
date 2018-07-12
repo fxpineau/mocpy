@@ -10,8 +10,8 @@ MOCPy is a Python library allowing easy creation, parsing and manipulation of MO
     :target: https://travis-ci.org/cds-astro/mocpy
     :alt: Test Status Travis-CI
 
-.. |Notebook Binder| image:: http://mybinder.org/badge.svg
-    :target: https://mybinder.org/v2/gh/cds-astro/mocpy/master
+.. |Notebook Binder| image:: https://mybinder.org/badge.svg
+    :target: https://mybinder.org/v2/gh/cds-astro/mocpy/MOCSkyRegion
 
 .. |RTD| image:: //readthedocs.org/projects/mocpy/badge/?version=latest
     :target: https://mocpy.readthedocs.io/en/latest/?badge=latest
