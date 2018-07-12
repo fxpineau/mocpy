@@ -13,6 +13,5 @@ MOCPy is a Python library allowing easy creation, parsing and manipulation of MO
 .. |Notebook Binder| image:: https://mybinder.org/badge.svg
     :target: https://mybinder.org/v2/gh/cds-astro/mocpy/MOCSkyRegion
 
-.. |RTD| image:: //readthedocs.org/projects/mocpy/badge/?version=latest
-    :target: https://mocpy.readthedocs.io/en/latest/?badge=latest
-    :alt: Documentation Status
+.. |RTD| image:: https://readthedocs.org/projects/mocpy/badge/?version=latest
+    :target: https://mocpy.readthedocs.io/en/mocskyregion/
