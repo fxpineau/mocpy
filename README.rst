@@ -26,8 +26,8 @@ for more details about installing MOCPy and using it.
 
    *Rendered with MOCpy!*
 
-.. |PyPI version| image:: https://badge.fury.io/py/mocpy.svg
-    :target: https://badge.fury.io/py/mocpy
+.. |PyPI version| image:: https://badge.fury.io/py/MOCPy.svg
+    :target: https://badge.fury.io/py/MOCPy
 
 .. |Build/Test status| image:: https://github.com/cds-astro/mocpy/actions/workflows/test.yml/badge.svg
     :target: https://github.com/cds-astro/mocpy/actions/workflows/test.yml
